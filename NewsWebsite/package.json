@@ -1,0 +1,20 @@
+{
+  "name": "newswebsite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "jquery-validation-unobtrusive": "^3.2.11",
+    "quill": "^1.3.7",
+    "@mitkoz/jquery-comments": "^1.3.1",
+    "font-awesome": "^4.7.0",
+    "jquery-textcomplete": "^1.8.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

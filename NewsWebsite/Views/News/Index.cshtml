@@ -1,0 +1,125 @@
+﻿@using ReflectionIT.Mvc.Paging
+@using NewsWebsite.ViewModels.News;
+@model PagingList<DetailsNewsViewModel>
+@addTagHelper *, ReflectionIT.Mvc.Paging
+@inject Services.CRUD.Interfaces.IUsersService usersService;
+@using System.Security.Claims;
+@using NewsWebsite.Auth;
+
+@{
+    ViewData["Title"] = "ListAll";
+}
+
+<link rel="stylesheet" type="text/css" href="/node_modules/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="/node_modules/quill/dist/quill.snow.css">
+<link rel="stylesheet" type="text/css" href="~/css/QuillWYSIWYG.css">
+<script src="/node_modules/quill/dist/quill.js"></script>
+<script src="~/js/NewsQuillWYSIWYG.js"></script>
+
+<h1>All News</h1>
+
+<p>
+    @if (usersService.IsSignedIn(User))
+    {
+        string currentUserId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (await this.usersService.IsInRoleAsync(currentUserId, RoleConstants.Administrator) || await this.usersService.IsInRoleAsync(currentUserId, RoleConstants.Reporter))
+        {
+            <a asp-action="Create" class="btn btn-primary">Create News</a>
+        }
+    }
+</p>
+
+<form method="get" class="form-inline">
+    <input name="filter" class="form-control" placeholder="@nameof(DetailsNewsViewModel.Title)"
+           value="@Model.RouteValue["filter"]" />
+
+    <button type="submit" class="btn btn-info">
+        <i class="fa fa-search" aria-hidden="true"></i>
+        Search
+    </button>
+</form>
+
+<nav aria-label="News page navigation">
+    <vc:pager paging-list="@Model"></vc:pager>
+</nav>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.SortableHeaderFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Content)
+            </th>
+            <th>
+                @Html.SortableHeaderFor(model => model.ReporterName)
+            </th>
+            <th>
+                @Html.SortableHeaderFor(model => model.CreatedAt)
+            </th>
+            <th>
+                @Html.SortableHeaderFor(model => model.UpdatedAt)
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @for (int i = 0; i < Model.Count(); i++)
+        {
+            var item = Model[i];
+
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    <div class="container">
+                        <div id="editor-container-@i"></div>
+                    </div>
+
+                    <script>
+                        let wysiwyg_@i = new WYSIWYG("editor-container-@i", true); // use _ in the JavaScript variables names (we get a runtime error when using -)
+                        (wysiwyg_@i).populateContainerWithWYSIWYGData(@Html.Raw(item.Content)); // we set the contents of QuillJs, so that we can extract some part of it's text (since it's stored in Deltas format)
+                        (wysiwyg_@i).setText((wysiwyg_@i).getShortExcerpt());
+                    </script>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ReporterName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CreatedAt)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UpdatedAt)
+                </td>
+                <td>
+                    @Html.ActionLink("Details", "GetDetails", new { id = item.Id })
+                </td>
+
+                @if (usersService.IsSignedIn(User))
+                {
+                    string currentUserId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                    if (currentUserId == item.ReporterId || await this.usersService.IsInRoleAsync(currentUserId, RoleConstants.Administrator))
+                    {
+                        <td>
+                            @Html.ActionLink("Edit", "Edit", new { id = item.Id })
+                        </td>
+
+                        <td>
+                            <partial name="_DeleteModal" model="new DeleteModalViewModel { Id = item.Id, Title = item.Title }" />
+                        </td>
+                    }
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav aria-label="News page navigation">
+    <vc:pager paging-list="@Model" />
+</nav>
